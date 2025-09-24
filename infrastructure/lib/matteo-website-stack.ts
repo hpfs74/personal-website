@@ -9,6 +9,7 @@ import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 
 export interface MatteoWebsiteStackProps extends cdk.StackProps {
@@ -22,6 +23,17 @@ export class MatteoWebsiteStack extends cdk.Stack {
 
     const domainName = props.subdomain ? `${props.subdomain}.${props.domain}` : props.domain;
     const siteDomain = props.subdomain ? domainName : `www.${props.domain}`;
+
+    // GitHub token secret for CodePipeline
+    const githubTokenSecret = new secretsmanager.Secret(this, 'GitHubToken', {
+      secretName: 'github-token',
+      description: 'GitHub personal access token for CodePipeline source action',
+      generateSecretString: {
+        excludeCharacters: '"@/\\',
+        generateStringKey: 'token',
+        secretStringTemplate: '{}',
+      },
+    });
 
     // S3 bucket for website hosting
     const siteBucket = new s3.Bucket(this, 'SiteBucket', {
@@ -48,10 +60,9 @@ export class MatteoWebsiteStack extends cdk.Stack {
     });
 
     // CloudFront Origin Access Control
-    const originAccessControl = new cloudfront.OriginAccessControl(this, 'OriginAccessControl', {
+    const originAccessControl = new cloudfront.S3OriginAccessControl(this, 'OriginAccessControl', {
       originAccessControlName: `${siteDomain}-oac`,
       signing: cloudfront.Signing.SIGV4_ALWAYS,
-      originAccessControlOriginType: cloudfront.OriginAccessControlOriginType.S3,
     });
 
     // CloudFront Distribution
@@ -74,7 +85,7 @@ export class MatteoWebsiteStack extends cdk.Stack {
       ],
       defaultBehavior: {
         origin: new origins.S3Origin(siteBucket, {
-          originAccessControl,
+          originAccessControlId: originAccessControl.originAccessControlId,
         }),
         compress: true,
         allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
@@ -163,6 +174,32 @@ export class MatteoWebsiteStack extends cdk.Stack {
       }),
     );
 
+    // Create invalidation project for CloudFront cache invalidation
+    const invalidationProject = new codebuild.Project(this, 'InvalidateProject', {
+      buildSpec: codebuild.BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+          build: {
+            commands: [
+              `aws cloudfront create-invalidation --distribution-id ${distribution.distributionId} --paths "/*"`,
+            ],
+          },
+        },
+      }),
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
+        computeType: codebuild.ComputeType.SMALL,
+      },
+    });
+
+    // Grant the invalidation project CloudFront permissions
+    invalidationProject.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['cloudfront:CreateInvalidation'],
+        resources: [distribution.distributionArn],
+      }),
+    );
+
     // CodePipeline
     const sourceOutput = new codepipeline.Artifact();
     const buildOutput = new codepipeline.Artifact();
@@ -205,22 +242,7 @@ export class MatteoWebsiteStack extends cdk.Stack {
             }),
             new codepipeline_actions.CodeBuildAction({
               actionName: 'InvalidateCache',
-              project: new codebuild.Project(this, 'InvalidateProject', {
-                buildSpec: codebuild.BuildSpec.fromObject({
-                  version: '0.2',
-                  phases: {
-                    build: {
-                      commands: [
-                        `aws cloudfront create-invalidation --distribution-id ${distribution.distributionId} --paths "/*"`,
-                      ],
-                    },
-                  },
-                }),
-                environment: {
-                  buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
-                  computeType: codebuild.ComputeType.SMALL,
-                },
-              }),
+              project: invalidationProject,
               input: buildOutput,
               runOrder: 2,
             }),
@@ -229,19 +251,6 @@ export class MatteoWebsiteStack extends cdk.Stack {
       ],
     });
 
-    // Grant the invalidation project CloudFront permissions
-    const invalidateProject = pipeline.stages[2].actions.find(
-      action => action.actionProperties.actionName === 'InvalidateCache'
-    ) as codepipeline_actions.CodeBuildAction;
-
-    if (invalidateProject && invalidateProject.project) {
-      invalidateProject.project.addToRolePolicy(
-        new iam.PolicyStatement({
-          actions: ['cloudfront:CreateInvalidation'],
-          resources: [distribution.distributionArn],
-        }),
-      );
-    }
 
     // Outputs
     new cdk.CfnOutput(this, 'Site', {
