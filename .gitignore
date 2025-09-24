@@ -22,3 +22,18 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# CDK infrastructure
+infrastructure/cdk.out/
+infrastructure/node_modules/
+infrastructure/lib/*.js
+infrastructure/lib/*.d.ts
+infrastructure/bin/*.js
+infrastructure/bin/*.d.ts
+
+# AWS
+.aws/
+
+# Editor
+.vscode/*
+!.vscode/extensions.json

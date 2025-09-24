@@ -1,16 +1,24 @@
 ---
-
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/Hero.astro';
+import About from '../components/About.astro';
+import Experience from '../components/Experience.astro';
+import Skills from '../components/Skills.astro';
+import Projects from '../components/Projects.astro';
+import Contact from '../components/Contact.astro';
+import Footer from '../components/Footer.astro';
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Layout title="Matteo - Software Engineer">
+  <Header />
+  <main>
+    <Hero />
+    <About />
+    <Experience />
+    <Skills />
+    <Projects />
+    <Contact />
+  </main>
+  <Footer />
+</Layout>

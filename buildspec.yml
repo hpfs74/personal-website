@@ -1,0 +1,25 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+  pre_build:
+    commands:
+      - echo Install dependencies...
+      - npm ci
+  build:
+    commands:
+      - echo Build started on `date`
+      - npm run build
+      - echo Build completed on `date`
+  post_build:
+    commands:
+      - echo Post-build phase...
+      - aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: 'dist'
+  name: matteo-website-artifacts
