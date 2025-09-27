@@ -64,7 +64,7 @@ const { Content } = await post.render();
           </div>
         </header>
 
-        <div class="prose prose-lg max-w-none">
+        <div class="blog-content">
           <Content />
         </div>
       </div>
@@ -86,18 +86,21 @@ const { Content } = await post.render();
 </Layout>
 
 <style>
-  .prose {
+  .blog-content {
     color: #374151;
+    font-size: 1.125rem;
+    line-height: 1.75;
   }
 
-  .prose h1 {
+  .blog-content h1 {
     font-size: 2.25rem;
     font-weight: 700;
     margin-bottom: 1rem;
+    margin-top: 2rem;
     color: #111827;
   }
 
-  .prose h2 {
+  .blog-content h2 {
     font-size: 1.875rem;
     font-weight: 600;
     margin-top: 2rem;
@@ -105,7 +108,7 @@ const { Content } = await post.render();
     color: #111827;
   }
 
-  .prose h3 {
+  .blog-content h3 {
     font-size: 1.5rem;
     font-weight: 600;
     margin-top: 1.5rem;
@@ -113,44 +116,99 @@ const { Content } = await post.render();
     color: #111827;
   }
 
-  .prose p {
+  .blog-content h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 1.25rem;
+    margin-bottom: 0.75rem;
+    color: #111827;
+  }
+
+  .blog-content h5 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: #111827;
+  }
+
+  .blog-content h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: #111827;
+  }
+
+  .blog-content p {
     margin-bottom: 1rem;
     line-height: 1.75;
   }
 
-  .prose ul, .prose ol {
+  .blog-content ul {
     margin-bottom: 1rem;
     padding-left: 1.5rem;
+    list-style-type: disc !important;
+    list-style-position: outside !important;
   }
 
-  .prose li {
+  .blog-content ul li::marker {
+    content: "• " !important;
+    color: #3b82f6;
+    font-weight: bold;
+  }
+
+  .blog-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+    list-style-type: decimal !important;
+    list-style-position: outside !important;
+  }
+
+  .blog-content ol li::marker {
+    content: counter(list-item) ". " !important;
+    color: #3b82f6;
+    font-weight: bold;
+  }
+
+  .blog-content li {
+    margin-bottom: 0.5rem;
+    line-height: 1.75;
+    display: list-item !important;
+  }
+
+  .blog-content li > ul,
+  .blog-content li > ol {
+    margin-top: 0.5rem;
     margin-bottom: 0.5rem;
   }
 
-  .prose code {
+  .blog-content code {
     background-color: #f3f4f6;
     padding: 0.125rem 0.25rem;
     border-radius: 0.25rem;
     font-size: 0.875rem;
     color: #dc2626;
+    font-family: ui-monospace, 'Courier New', monospace;
   }
 
-  .prose pre {
+  .blog-content pre {
     background-color: #1f2937;
     color: #f9fafb;
     padding: 1rem;
     border-radius: 0.5rem;
     overflow-x: auto;
     margin-bottom: 1rem;
+    font-family: ui-monospace, 'Courier New', monospace;
   }
 
-  .prose pre code {
+  .blog-content pre code {
     background-color: transparent;
     padding: 0;
     color: inherit;
   }
 
-  .prose blockquote {
+  .blog-content blockquote {
     border-left: 4px solid #3b82f6;
     padding-left: 1rem;
     margin: 1.5rem 0;
@@ -158,12 +216,51 @@ const { Content } = await post.render();
     color: #6b7280;
   }
 
-  .prose a {
+  .blog-content a {
     color: #3b82f6;
     text-decoration: underline;
   }
 
-  .prose a:hover {
+  .blog-content a:hover {
     color: #1d4ed8;
+  }
+
+  .blog-content strong {
+    font-weight: 600;
+  }
+
+  .blog-content em {
+    font-style: italic;
+  }
+
+  .blog-content hr {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 2rem 0;
+  }
+
+  .blog-content img {
+    max-width: 100%;
+    height: auto;
+    margin: 1rem 0;
+    border-radius: 0.5rem;
+  }
+
+  .blog-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+
+  .blog-content th,
+  .blog-content td {
+    border: 1px solid #e5e7eb;
+    padding: 0.5rem 1rem;
+    text-align: left;
+  }
+
+  .blog-content th {
+    background-color: #f9fafb;
+    font-weight: 600;
   }
 </style>
