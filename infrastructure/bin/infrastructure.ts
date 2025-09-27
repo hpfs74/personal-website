@@ -2,14 +2,30 @@
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { MatteoWebsiteStack } from '../lib/matteo-website-stack';
+import { CertificateStack } from '../lib/certificate-stack';
 
 const app = new cdk.App();
 
-new MatteoWebsiteStack(app, 'MatteoWebsiteStack', {
+
+const certificateStack = new CertificateStack(app, 'CertificateStack', {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: process.env.CDK_DEFAULT_REGION || 'us-east-1',
+    region: 'us-east-1',
+  },  
+  domain: 'matteo.wtf',
+  subdomain: 'www',
+  crossRegionReferences: true,
+});
+
+const websiteStack = new MatteoWebsiteStack(app, 'MatteoWebsiteStack', {
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: 'eu-south-1',
   },
   domain: 'matteo.wtf',
   subdomain: 'www',
+  certificate: certificateStack.certificate,
+  crossRegionReferences: true,
 });
+
+// websiteStack.addDependency(certificateStack);

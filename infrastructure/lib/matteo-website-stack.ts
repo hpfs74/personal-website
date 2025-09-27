@@ -15,25 +15,22 @@ import { Construct } from 'constructs';
 export interface MatteoWebsiteStackProps extends cdk.StackProps {
   domain: string;
   subdomain?: string;
+  certificate: certificatemanager.ICertificate;
 }
 
 export class MatteoWebsiteStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: MatteoWebsiteStackProps) {
     super(scope, id, props);
+    const { certificate } = props;
 
     const domainName = props.subdomain ? `${props.subdomain}.${props.domain}` : props.domain;
     const siteDomain = props.subdomain ? domainName : `www.${props.domain}`;
 
-    // GitHub token secret for CodePipeline
-    const githubTokenSecret = new secretsmanager.Secret(this, 'GitHubToken', {
-      secretName: 'github-token',
-      description: 'GitHub personal access token for CodePipeline source action',
-      generateSecretString: {
-        excludeCharacters: '"@/\\',
-        generateStringKey: 'token',
-        secretStringTemplate: '{}',
-      },
-    });
+    console.log(`Setting up website for domain: ${siteDomain}`);
+
+    // GitHub token secret - you need to manually set this in AWS Secrets Manager
+    // with your actual GitHub personal access token
+    const githubTokenSecret = secretsmanager.Secret.fromSecretNameV2(this, 'GitHubToken', 'gh-token');
 
     // S3 bucket for website hosting
     const siteBucket = new s3.Bucket(this, 'SiteBucket', {
@@ -51,14 +48,6 @@ export class MatteoWebsiteStack extends cdk.Stack {
       domainName: props.domain,
     });
 
-    // SSL Certificate
-    const certificateArn = new certificatemanager.DnsValidatedCertificate(this, 'SiteCertificate', {
-      domainName: siteDomain,
-      hostedZone: zone,
-      region: 'us-east-1', // CloudFront requires certificates in us-east-1
-      subjectAlternativeNames: [`*.${props.domain}`],
-    });
-
     // CloudFront Origin Access Control
     const originAccessControl = new cloudfront.S3OriginAccessControl(this, 'OriginAccessControl', {
       originAccessControlName: `${siteDomain}-oac`,
@@ -67,7 +56,7 @@ export class MatteoWebsiteStack extends cdk.Stack {
 
     // CloudFront Distribution
     const distribution = new cloudfront.Distribution(this, 'SiteDistribution', {
-      certificate: certificateArn,
+      certificate: certificate,
       defaultRootObject: 'index.html',
       domainNames: [siteDomain],
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
@@ -84,7 +73,7 @@ export class MatteoWebsiteStack extends cdk.Stack {
         },
       ],
       defaultBehavior: {
-        origin: new origins.S3Origin(siteBucket, {
+        origin: origins.S3BucketOrigin.withOriginAccessControl(siteBucket, {
           originAccessControlId: originAccessControl.originAccessControlId,
         }),
         compress: true,
@@ -107,11 +96,16 @@ export class MatteoWebsiteStack extends cdk.Stack {
       }),
     );
 
-    // Route53 alias record for the CloudFront distribution
-    new route53.ARecord(this, 'SiteAliasRecord', {
-      recordName: siteDomain,
-      target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
-      zone,
+    // // Route53 alias record for the CloudFront distribution
+    // new route53.ARecord(this, 'SiteAliasRecord', {
+    //   recordName: siteDomain,
+    //   target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
+    //   zone,
+    // });
+
+    // GitHub source credentials for CodeBuild
+    new codebuild.GitHubSourceCredentials(this, 'GitHubSourceCredentials', {
+      accessToken: githubTokenSecret.secretValue,
     });
 
     // CodeBuild project
@@ -215,7 +209,7 @@ export class MatteoWebsiteStack extends cdk.Stack {
               owner: 'hpfs74',
               repo: 'personal-website',
               branch: 'main',
-              oauthToken: cdk.SecretValue.secretsManager('github-token'), // Store GitHub token in Secrets Manager
+              oauthToken: cdk.SecretValue.secretsManager('gh-token'), // Store GitHub token in Secrets Manager
               output: sourceOutput,
             }),
           ],
@@ -266,7 +260,7 @@ export class MatteoWebsiteStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, 'CertificateArn', {
-      value: certificateArn.certificateArn,
+      value: certificate.certificateArn,
     });
   }
 }
