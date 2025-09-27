@@ -96,12 +96,12 @@ export class MatteoWebsiteStack extends cdk.Stack {
       }),
     );
 
-    // // Route53 alias record for the CloudFront distribution
-    // new route53.ARecord(this, 'SiteAliasRecord', {
-    //   recordName: siteDomain,
-    //   target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
-    //   zone,
-    // });
+    // Route53 alias record for the CloudFront distribution
+    new route53.ARecord(this, 'SiteAliasRecord', {
+      recordName: siteDomain,
+      target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
+      zone,
+    });
 
     // GitHub source credentials for CodeBuild
     new codebuild.GitHubSourceCredentials(this, 'GitHubSourceCredentials', {
