@@ -1,0 +1,17 @@
+{
+  "hosted-zone:account=495133941005:domainName=matteo.wtf:region=eu-south-1": {
+    "Id": "/hostedzone/Z075654925GOO6BAKVFMD",
+    "Name": "matteo.wtf."
+  },
+  "acknowledged-issue-numbers": [
+    34892
+  ],
+  "hosted-zone:account=495133941005:domainName=matteo.wtf:region=us-east-1": {
+    "Id": "/hostedzone/Z075654925GOO6BAKVFMD",
+    "Name": "matteo.wtf."
+  },
+  "hosted-zone:account=495133941005:domainName=matteo.wtf:region=eu-west-1": {
+    "Id": "/hostedzone/Z075654925GOO6BAKVFMD",
+    "Name": "matteo.wtf."
+  }
+}
