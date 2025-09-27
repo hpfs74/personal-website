@@ -12,14 +12,14 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 
-export interface MatteoWebsiteStackProps extends cdk.StackProps {
+export interface WebsiteStackProps extends cdk.StackProps {
   domain: string;
   subdomain?: string;
   certificate: certificatemanager.ICertificate;
 }
 
-export class MatteoWebsiteStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: MatteoWebsiteStackProps) {
+export class WebsiteStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props: WebsiteStackProps) {
     super(scope, id, props);
     const { certificate } = props;
 
