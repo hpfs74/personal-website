@@ -197,7 +197,7 @@ To use a different domain:
 
 - **Website**: [matteo.wtf](https://matteo.wtf)
 - **Email**: hello@matteo.wtf
-- **GitHub**: [github.com/matteo](https://github.com/matteo)
+- **GitHub**: [github.com/matteo](https://github.com/hpfs74)
 
 ## 📄 License
 

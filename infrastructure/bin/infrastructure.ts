@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { WebsiteStack } from '../lib/matteo-website-stack';
+import { WebsiteStack } from '../lib/website-stack';
 import { CertificateStack } from '../lib/certificate-stack';
 
 const app = new cdk.App();
