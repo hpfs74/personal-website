@@ -3,7 +3,8 @@ import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { WebsiteStack } from '../lib/website-stack';
 import { CertificateStack } from '../lib/certificate-stack';
-import { PipelineStack } from '../lib/pipeline-stack';
+import { FrontendPipelineStack } from '../lib/pipeline-stack';
+import { InfrastructurePipelineStack } from '../lib/infrastructure-pipeline-stack';
 import { EmailStack } from '../lib/email-stack';
 
 const app = new cdk.App();
@@ -31,13 +32,21 @@ const websiteStack = new WebsiteStack(app, 'PersonalWebsiteStack', {
   certificate: certificateStack.certificate,
 });
 
-const pipelineStack = new PipelineStack(app, 'PipelineStack', {
+// Infrastructure pipeline - self-mutating for infrastructure changes
+const infrastructurePipelineStack = new InfrastructurePipelineStack(app, 'InfrastructurePipelineStack', {
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: 'eu-south-1',
+  },
+});
+
+// Frontend pipeline - for website code changes
+const frontendPipelineStack = new FrontendPipelineStack(app, 'FrontendPipelineStack', {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: 'eu-south-1',
   },
   crossRegionReferences: true,
-
   distribution: websiteStack.distribution,
   siteBucket: websiteStack.siteBucket,
 });
@@ -55,4 +64,4 @@ const emailStack = new EmailStack(app, 'EmailStack', {
 void emailStack;
 
 websiteStack.addDependency(certificateStack);
-pipelineStack.addDependency(websiteStack);
+frontendPipelineStack.addDependency(websiteStack);

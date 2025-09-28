@@ -9,6 +9,10 @@
     "test": "jest",
     "cdk": "cdk",
     "deploy": "cdk deploy",
+    "deploy:all": "cdk deploy --all --require-approval never",
+    "deploy:infrastructure-pipeline": "cdk deploy InfrastructurePipelineStack --require-approval never",
+    "deploy:frontend-pipeline": "cdk deploy FrontendPipelineStack --require-approval never",
+    "bootstrap": "node bootstrap-infrastructure.js",
     "diff": "cdk diff",
     "synth": "cdk synth"
   },

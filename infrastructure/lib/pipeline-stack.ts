@@ -1,10 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
-import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
-import * as certificatemanager from 'aws-cdk-lib/aws-certificatemanager';
-import * as route53 from 'aws-cdk-lib/aws-route53';
-import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
@@ -17,7 +13,7 @@ export interface PipelineStackProps extends cdk.StackProps {
 	siteBucket: s3.Bucket;
 }
 
-export class PipelineStack extends cdk.Stack {
+export class FrontendPipelineStack extends cdk.Stack {
 
 	constructor(scope: Construct, id: string, props: PipelineStackProps) {
 		super(scope, id, props);
@@ -34,14 +30,16 @@ export class PipelineStack extends cdk.Stack {
       accessToken: githubTokenSecret.secretValue,
     });
 
-    // CodeBuild project
-    const codeBuildProject = new codebuild.Project(this, 'BuildProject', {
+    // CodeBuild project for frontend only
+    const codeBuildProject = new codebuild.Project(this, 'FrontendBuildProject', {
       source: codebuild.Source.gitHub({
         owner: 'hpfs74',
         repo: 'personal-website',
         webhook: true,
         webhookFilters: [
-          codebuild.FilterGroup.inEventOf(codebuild.EventAction.PUSH).andBranchIs('main'),
+          codebuild.FilterGroup.inEventOf(codebuild.EventAction.PUSH)
+            .andBranchIs('main')
+            .andFilePathIsNot('infrastructure/**'),
         ],
       }),
       environment: {
@@ -53,7 +51,7 @@ export class PipelineStack extends cdk.Stack {
           },
         },
       },
-      buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec.yml'),
+      buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec-frontend.yml'),
     });
 
     // Grant CodeBuild permissions to deploy to S3
@@ -67,87 +65,6 @@ export class PipelineStack extends cdk.Stack {
       }),
     );
 
-    // Grant CodeBuild permissions for CDK deployment
-    codeBuildProject.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: [
-          'cloudformation:CreateStack',
-          'cloudformation:UpdateStack',
-          'cloudformation:DeleteStack',
-          'cloudformation:DescribeStacks',
-          'cloudformation:DescribeStackEvents',
-          'cloudformation:DescribeStackResources',
-          'cloudformation:GetTemplate',
-          'cloudformation:ValidateTemplate',
-          'cloudformation:CreateChangeSet',
-          'cloudformation:DescribeChangeSet',
-          'cloudformation:ExecuteChangeSet',
-          'cloudformation:DeleteChangeSet',
-          'cloudformation:ListChangeSets',
-          'cloudformation:GetTemplateSummary',
-        ],
-        resources: ['*'],
-      }),
-    );
-
-    // Grant CodeBuild permissions for SES, S3, Lambda, IAM, and Route53 operations
-    codeBuildProject.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: [
-          'ses:*',
-          's3:CreateBucket',
-          's3:DeleteBucket',
-          's3:PutBucketPolicy',
-          's3:PutBucketLifecycleConfiguration',
-          's3:GetBucketLocation',
-          'lambda:CreateFunction',
-          'lambda:UpdateFunctionCode',
-          'lambda:UpdateFunctionConfiguration',
-          'lambda:DeleteFunction',
-          'lambda:GetFunction',
-          'lambda:AddPermission',
-          'lambda:RemovePermission',
-          'lambda:TagResource',
-          'lambda:UntagResource',
-          'iam:CreateRole',
-          'iam:UpdateRole',
-          'iam:DeleteRole',
-          'iam:GetRole',
-          'iam:PassRole',
-          'iam:AttachRolePolicy',
-          'iam:DetachRolePolicy',
-          'iam:PutRolePolicy',
-          'iam:DeleteRolePolicy',
-          'iam:GetRolePolicy',
-          'iam:TagRole',
-          'iam:UntagRole',
-          'route53:GetHostedZone',
-          'route53:ListHostedZones',
-          'route53:ChangeResourceRecordSets',
-          'route53:GetChange',
-          'route53:ListResourceRecordSets',
-          'ssm:GetParameter',
-          'ssm:GetParameters',
-          'ssm:PutParameter',
-          'ssm:DeleteParameter',
-          'ssm:AddTagsToResource',
-          'ssm:RemoveTagsFromResource',
-        ],
-        resources: ['*'],
-      }),
-    );
-
-    // Grant CodeBuild permissions for CDK bootstrap operations
-    codeBuildProject.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: [
-          'sts:AssumeRole',
-        ],
-        resources: [
-          `arn:aws:iam::${this.account}:role/cdk-*`,
-        ],
-      }),
-    );
 
     // Create invalidation project for CloudFront cache invalidation
     const invalidationProject = new codebuild.Project(this, 'InvalidateProject', {
@@ -179,8 +96,8 @@ export class PipelineStack extends cdk.Stack {
     const sourceOutput = new codepipeline.Artifact();
     const buildOutput = new codepipeline.Artifact();
 
-    const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
-      pipelineName: 'matteo-website-pipeline',
+    new codepipeline.Pipeline(this, 'FrontendPipeline', {
+      pipelineName: 'matteo-frontend-pipeline',
       stages: [
         {
           stageName: 'Source',
