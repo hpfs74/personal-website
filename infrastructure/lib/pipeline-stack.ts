@@ -39,7 +39,7 @@ export class FrontendPipelineStack extends cdk.Stack {
         webhookFilters: [
           codebuild.FilterGroup.inEventOf(codebuild.EventAction.PUSH)
             .andBranchIs('main')
-            .andFilePathIsNot('infrastructure/**'),
+            .andFilePathIsNot('^infrastructure/.*'),
         ],
       }),
       environment: {
