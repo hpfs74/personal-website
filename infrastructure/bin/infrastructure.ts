@@ -46,7 +46,7 @@ const pipelineStack = new PipelineStack(app, 'PipelineStack', {
 const emailStack = new EmailStack(app, 'EmailStack', {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: 'us-east-1',
+    region: 'eu-south-1',
   },
   domain: 'matteo.wtf',
 });
