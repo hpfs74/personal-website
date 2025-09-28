@@ -60,7 +60,7 @@ export class EmailStack extends cdk.Stack {
     );
 
     // SES receipt rule set
-    const ruleSet = new ses.ReceiptRuleSet(this, "EmailRuleSet", {
+    const ruleSet = new ses.ReceiptRuleSet(this, "ReceiveEmailRuleSet", {
       receiptRuleSetName: `${domain}-receive-email-rules`,
     });
 
