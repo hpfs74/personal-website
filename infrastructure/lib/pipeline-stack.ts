@@ -35,12 +35,12 @@ export class FrontendPipelineStack extends cdk.Stack {
       source: codebuild.Source.gitHub({
         owner: 'hpfs74',
         repo: 'personal-website',
-        webhook: true,
-        webhookFilters: [
-          codebuild.FilterGroup.inEventOf(codebuild.EventAction.PUSH)
-            .andBranchIs('main')
-            .andFilePathIsNot('^infrastructure/.*'),
-        ],
+        // webhook: true,
+        // webhookFilters: [
+        //   codebuild.FilterGroup.inEventOf(codebuild.EventAction.PUSH)
+        //     .andBranchIs('main')
+        //     .andFilePathIsNot('^infrastructure/.*'),
+        // ],
       }),
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
