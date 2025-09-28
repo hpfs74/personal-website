@@ -45,10 +45,11 @@ npm run synth                  # Generate CloudFormation templates
 - Comprehensive utility function testing (see `src/utils/formatters.test.ts` with 42 test cases)
 
 ### Infrastructure (AWS CDK)
-Three-stack architecture in `infrastructure/`:
+Four-stack architecture in `infrastructure/`:
 1. **CertificateStack** (us-east-1): SSL certificate management
 2. **WebsiteStack** (eu-south-1): S3 + CloudFront + Route 53 hosting
 3. **PipelineStack** (eu-south-1): CodePipeline + CodeBuild CI/CD
+4. **EmailStack** (eu-south-1): SES email forwarding from hello@matteo.wtf to matteo.salvestrini@icloud.com
 
 ### CI/CD Pipeline
 Automated deployment via `buildspec.yml`:
@@ -89,6 +90,14 @@ Automated deployment via `buildspec.yml`:
 - Secure S3 hosting with Origin Access Control (private buckets)
 - Custom domain: www.matteo.wtf with automatic DNS management
 - Automated SSL certificate provisioning and renewal
+- Email forwarding: SES receives emails at hello@matteo.wtf, Lambda forwards to matteo.salvestrini@icloud.com
+
+### Email Infrastructure Details
+- **S3 Bucket**: Temporary email storage with 7-day lifecycle policy
+- **Lambda Function**: Node.js 20.x runtime for email processing and forwarding
+- **SES Rules**: Receipt rule set with S3 and Lambda actions
+- **MX Record**: Automatically created pointing to `inbound-smtp.eu-south-1.amazonaws.com`
+- **Required Setup**: SES domain verification and email address verification for matteo.salvestrini@icloud.com
 
 ### Component Development
 - Follow existing component patterns in `src/components/`
