@@ -61,7 +61,7 @@ export class EmailStack extends cdk.Stack {
 
     // SES receipt rule set
     const ruleSet = new ses.ReceiptRuleSet(this, "EmailRuleSet", {
-      receiptRuleSetName: `${domain}-email-rules`,
+      receiptRuleSetName: `${domain}-receive-email-rules`,
     });
 
     // SES receipt rule for email forwarding
