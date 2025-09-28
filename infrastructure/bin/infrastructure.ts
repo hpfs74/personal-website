@@ -19,7 +19,7 @@ const certificateStack = new CertificateStack(app, 'CertificateStack', {
   crossRegionReferences: true,
 });
 
-const websiteStack = new WebsiteStack(app, 'MatteoWebsiteStack', {
+const websiteStack = new WebsiteStack(app, 'PersonalWebsiteStack', {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: 'eu-south-1',
@@ -46,7 +46,7 @@ const pipelineStack = new PipelineStack(app, 'PipelineStack', {
 const emailStack = new EmailStack(app, 'EmailStack', {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: 'eu-south-1',
+    region: 'us-east-1',
   },
   domain: 'matteo.wtf',
 });

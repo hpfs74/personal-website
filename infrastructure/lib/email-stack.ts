@@ -34,7 +34,7 @@ export class EmailStack extends cdk.Stack {
     // Lambda function for email forwarding
     const emailForwarder = new lambda.NodejsFunction(this, "EmailForwarder", {
       handler: `handler`,
-      entry: `backend/src/assets/lambdas/email-forwarder.js`,
+      entry: `assets/lambdas/email-forwarder.js`,
       bundling: {
         minify: true,
         loader: { ".node": "file" },
