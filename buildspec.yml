@@ -21,6 +21,12 @@ phases:
   post_build:
     commands:
       - echo Post-build phase...
+      - echo Deploying infrastructure stacks...
+      - cd infrastructure
+      - npm ci
+      - npm run deploy -- --require-approval never
+      - cd ..
+      - echo Infrastructure deployment completed
       - aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
 
 artifacts:

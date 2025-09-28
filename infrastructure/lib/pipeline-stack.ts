@@ -47,40 +47,13 @@ export class PipelineStack extends cdk.Stack {
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
         computeType: codebuild.ComputeType.SMALL,
+        environmentVariables: {
+          DISTRIBUTION_ID: {
+            value: distribution.distributionId,
+          },
+        },
       },
-      buildSpec: codebuild.BuildSpec.fromObject({
-        version: '0.2',
-        phases: {
-          install: {
-            'runtime-versions': {
-              nodejs: '18',
-            },
-          },
-          pre_build: {
-            commands: [
-              'echo Install dependencies...',
-              'npm ci',
-            ],
-          },
-          build: {
-            commands: [
-              'echo Build started on `date`',
-              'npm run build',
-            ],
-          },
-          post_build: {
-            commands: [
-              'echo Build completed on `date`',
-            ],
-          },
-        },
-        artifacts: {
-          files: [
-            '**/*',
-          ],
-          'base-directory': 'dist',
-        },
-      }),
+      buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec.yml'),
     });
 
     // Grant CodeBuild permissions to deploy to S3
@@ -91,6 +64,88 @@ export class PipelineStack extends cdk.Stack {
       new iam.PolicyStatement({
         actions: ['cloudfront:CreateInvalidation'],
         resources: [distribution.distributionArn],
+      }),
+    );
+
+    // Grant CodeBuild permissions for CDK deployment
+    codeBuildProject.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          'cloudformation:CreateStack',
+          'cloudformation:UpdateStack',
+          'cloudformation:DeleteStack',
+          'cloudformation:DescribeStacks',
+          'cloudformation:DescribeStackEvents',
+          'cloudformation:DescribeStackResources',
+          'cloudformation:GetTemplate',
+          'cloudformation:ValidateTemplate',
+          'cloudformation:CreateChangeSet',
+          'cloudformation:DescribeChangeSet',
+          'cloudformation:ExecuteChangeSet',
+          'cloudformation:DeleteChangeSet',
+          'cloudformation:ListChangeSets',
+          'cloudformation:GetTemplateSummary',
+        ],
+        resources: ['*'],
+      }),
+    );
+
+    // Grant CodeBuild permissions for SES, S3, Lambda, IAM, and Route53 operations
+    codeBuildProject.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          'ses:*',
+          's3:CreateBucket',
+          's3:DeleteBucket',
+          's3:PutBucketPolicy',
+          's3:PutBucketLifecycleConfiguration',
+          's3:GetBucketLocation',
+          'lambda:CreateFunction',
+          'lambda:UpdateFunctionCode',
+          'lambda:UpdateFunctionConfiguration',
+          'lambda:DeleteFunction',
+          'lambda:GetFunction',
+          'lambda:AddPermission',
+          'lambda:RemovePermission',
+          'lambda:TagResource',
+          'lambda:UntagResource',
+          'iam:CreateRole',
+          'iam:UpdateRole',
+          'iam:DeleteRole',
+          'iam:GetRole',
+          'iam:PassRole',
+          'iam:AttachRolePolicy',
+          'iam:DetachRolePolicy',
+          'iam:PutRolePolicy',
+          'iam:DeleteRolePolicy',
+          'iam:GetRolePolicy',
+          'iam:TagRole',
+          'iam:UntagRole',
+          'route53:GetHostedZone',
+          'route53:ListHostedZones',
+          'route53:ChangeResourceRecordSets',
+          'route53:GetChange',
+          'route53:ListResourceRecordSets',
+          'ssm:GetParameter',
+          'ssm:GetParameters',
+          'ssm:PutParameter',
+          'ssm:DeleteParameter',
+          'ssm:AddTagsToResource',
+          'ssm:RemoveTagsFromResource',
+        ],
+        resources: ['*'],
+      }),
+    );
+
+    // Grant CodeBuild permissions for CDK bootstrap operations
+    codeBuildProject.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          'sts:AssumeRole',
+        ],
+        resources: [
+          `arn:aws:iam::${this.account}:role/cdk-*`,
+        ],
       }),
     );
 
