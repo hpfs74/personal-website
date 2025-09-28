@@ -20,11 +20,8 @@ export class InfrastructurePipelineStack extends cdk.Stack {
         primaryOutputDirectory: 'infrastructure/cdk.out',
         commands: [
           // Check if infrastructure files changed, exit early if not
-          'CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD || echo "all")',
-          'if [ "$CHANGED_FILES" != "all" ] && ! echo "$CHANGED_FILES" | grep -q "^infrastructure/"; then',
-          '  echo "No infrastructure changes detected, exiting"',
-          '  exit 0',
-          'fi',
+          'CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "all")',
+          'if [ "$CHANGED_FILES" != "all" ] && ! echo "$CHANGED_FILES" | grep -q "^infrastructure/"; then echo "No infrastructure changes detected, exiting" && exit 0; fi',
           'echo "Infrastructure changes detected, proceeding with deployment"',
           'cd infrastructure',
           'npm ci',
