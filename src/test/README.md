@@ -17,9 +17,6 @@ npm run test
 # Run tests once (CI/build)
 npm run test:run
 
-# Run tests with coverage report
-npm run test:coverage
-
 # Run tests with UI interface
 npm run test:ui
 

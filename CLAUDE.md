@@ -17,7 +17,6 @@ npm run preview                # Preview production build locally
 # Testing (Vitest with comprehensive setup)
 npm run test                   # Interactive test runner
 npm run test:run               # Single test run (used in CI)
-npm run test:coverage          # Generate coverage reports
 npm run test:ui                # Launch Vitest UI
 npm run test:watch             # Watch mode for development
 
@@ -55,9 +54,8 @@ Four-stack architecture in `infrastructure/`:
 Automated deployment via `buildspec.yml`:
 1. Install dependencies (`npm ci`)
 2. Run tests (`npm run test:run`) - must pass
-3. Generate coverage reports (`npm run test:coverage`)
-4. Build application (`npm run build`)
-5. Deploy to S3 + CloudFront invalidation
+3. Build application (`npm run build`)
+4. Deploy to S3 + CloudFront invalidation
 
 ## Key Configuration Files
 
@@ -128,6 +126,6 @@ Automated deployment via `buildspec.yml`:
 1. Write tests alongside implementation
 2. Use `npm run test:watch` during development
 3. Ensure `npm run test:run` passes before committing
-4. Check coverage with `npm run test:coverage`
+
 
 The project emphasizes type safety, comprehensive testing, and production-ready infrastructure with modern development practices.
