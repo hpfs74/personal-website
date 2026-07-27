@@ -4,128 +4,91 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is Matteo's personal CV website - a production-ready static site built with Astro.js, Tailwind CSS v4, and comprehensive AWS cloud infrastructure. The project follows modern development practices with TypeScript, comprehensive testing via Vitest, and automated CI/CD deployment.
+Personal CV + blog site for matteo.wtf. Static Astro 5 site (`src/`, root `package.json`) plus a separate AWS CDK app (`infrastructure/`, its own `package.json` and `node_modules`). The two halves have independent dependency trees and independent deployment pipelines — always `cd infrastructure` before running CDK commands.
 
-## Key Development Commands
+## Commands
 
 ```bash
-# Development
-npm run dev                    # Start Astro dev server (localhost:4321)
-npm run build                  # Production build to dist/
-npm run preview                # Preview production build locally
+# Website (repo root)
+npm run dev                # Astro dev server on localhost:4321
+npm run build              # Static build to dist/
+npm run preview            # Serve the built dist/
 
-# Testing (Vitest with comprehensive setup)
-npm run test                   # Interactive test runner
-npm run test:run               # Single test run (used in CI)
-npm run test:ui                # Launch Vitest UI
-npm run test:watch             # Watch mode for development
+npm run test               # Vitest watch mode
+npm run test:run           # Single run (what CI runs)
+npm run test:coverage      # v8 coverage → text/json/html
+npm run test:ui            # Vitest UI
 
-# Infrastructure (from infrastructure/ directory)
-cd infrastructure
-npm run deploy                 # Deploy AWS infrastructure
-npm run diff                   # Preview infrastructure changes
-npm run synth                  # Generate CloudFormation templates
+# Single test file / single test
+npx vitest run src/utils/formatters.test.ts
+npx vitest run -t "formatDate"
+
+# Infrastructure (cd infrastructure first)
+npm run build              # tsc — CDK code is compiled TS
+npm run diff               # Preview CloudFormation changes
+npm run synth              # Synthesize templates
+npm run deploy:all         # cdk deploy --all --require-approval never
+npm run bootstrap          # One-time: node bootstrap-infrastructure.js
 ```
 
-## Architecture Overview
+Node 24 is pinned in `.nvmrc`, `package.json` engines, and every buildspec.
 
-### Frontend Architecture
-- **Astro.js v5** with component islands architecture for optimal performance
-- **Tailwind CSS v4** with Vite plugin integration (`@import "tailwindcss"` in global.css)
-- **Component-based structure**: 8 main components (Header, Hero, About, Experience, Skills, Projects, Contact, Footer)
-- **Content Collections**: Type-safe blog posts with Zod schema validation
-- **Node.js 24**: Pinned across project (.nvmrc, package.json engines, buildspec.yml)
+There is no linter or formatter configured (no ESLint/Prettier/Biome) — don't look for one. Type checking comes from `astro check` / editor via `tsconfig.json` (extends `astro/tsconfigs/strict`).
 
-### Testing Strategy
-- **Vitest v3** with happy-dom environment for lightweight DOM simulation
-- **@testing-library/dom** for component testing utilities
-- Global test setup in `src/test/setup.ts` that mocks Astro environment
-- Tests co-located with source files using `.test.ts` suffix
-- Comprehensive utility function testing (see `src/utils/formatters.test.ts` with 42 test cases)
+## Architecture
 
-### Infrastructure (AWS CDK)
-Four-stack architecture in `infrastructure/`:
-1. **CertificateStack** (us-east-1): SSL certificate management
-2. **WebsiteStack** (eu-south-1): S3 + CloudFront + Route 53 hosting
-3. **PipelineStack** (eu-south-1): CodePipeline + CodeBuild CI/CD
-4. **EmailStack** (eu-south-1): SES email forwarding from hello@matteo.wtf to matteo.salvestrini@icloud.com
+### Site structure
 
-### CI/CD Pipeline
-Automated deployment via `buildspec.yml`:
-1. Install dependencies (`npm ci`)
-2. Run tests (`npm run test:run`) - must pass
-3. Build application (`npm run build`)
-4. Deploy to S3 + CloudFront invalidation
+- `src/pages/index.astro` composes the one-page CV from eight section components in `src/components/`. Components are self-contained: each holds its own content as a plain array/object literal in the frontmatter (see `Experience.astro`, `Skills.astro`, `Projects.astro`) — there is no CMS or shared data module. Editing CV content means editing those literals.
+- `src/pages/blog/index.astro` + `src/pages/blog/[...slug].astro` render the `blog` content collection (`src/content/config.ts`, Zod schema: title, description, pubDate required; updatedDate, heroImage, tags optional). Markdown lives in `src/content/blog/`.
+- `src/layouts/Layout.astro` is the only layout — sets `<head>`, loads Google Fonts (Syne + DM Sans) and `global.css`. It takes a single `title` prop.
+- `src/utils/` holds the only unit-tested code (`formatters.ts`, `validation.ts`). Tests are co-located `.test.ts` files; 48 tests currently pass.
 
-## Key Configuration Files
+### Styling — Tailwind v4 with a custom theme
 
-- `astro.config.mjs`: Astro + Tailwind v4 integration
-- `vitest.config.ts`: Comprehensive test environment with global setup
-- `tsconfig.json`: Strict TypeScript configuration extending Astro defaults
-- `infrastructure/bin/infrastructure.ts`: CDK app with multi-stack deployment
-- `src/content/config.ts`: Content collections schema with Zod validation
+`src/styles/global.css` is the design system. It declares an `@theme` block with semantic tokens rather than using Tailwind's default palette:
 
-## Important Development Notes
+`--color-bg` (#060c18 dark navy), `--color-surface`, `--color-border`, `--color-text`, `--color-muted`, `--color-accent` (#d4a843 gold), `--color-accent-dim`, plus `--font-display` (Syne) and `--font-body` (DM Sans).
 
-### Tailwind CSS v4 Integration
-- Uses new Tailwind v4 with `@tailwindcss/vite` plugin
-- Import via single line in `src/styles/global.css`: `@import "tailwindcss"`
-- No separate tailwind.config file needed with v4
+These generate utilities like `bg-bg`, `text-muted`, `border-border`, `text-accent`, `font-display`. **Use these tokens for new UI, not raw Tailwind colors.** Tailwind v4 has no config file; the `@tailwindcss/vite` plugin is wired in `astro.config.mjs` and `@import "tailwindcss"` sits at the top of `global.css`.
 
-### Content Management
-- Blog posts in `src/content/blog/` with frontmatter validation
-- Schema enforces: title, description, pubDate, updatedDate, heroImage, tags
-- Automatic type generation for content collections
+Known inconsistency: the homepage components use the dark token theme, but `src/pages/blog/index.astro` and `[...slug].astro` still use the old light palette (`bg-white`, `text-gray-900`, `bg-blue-100`) and a large inline `<style>` block for prose/prism styling. The blog has not been migrated to the theme yet.
 
-### Testing Environment
-- Custom test setup mocks Astro's component environment
-- Use `happy-dom` for fast DOM simulation
-- Coverage reporting configured with v8 provider
-- Multiple output formats supported (text, json, html)
+Markdown code highlighting is Prism (`astro.config.mjs` → `markdown.syntaxHighlight: 'prism'`). `remark-toc` and `rehype-accessible-emojis` are installed but currently commented out / unused.
 
-### Infrastructure Deployment
-- Multi-region setup: Certificate in us-east-1, hosting in eu-south-1
-- Secure S3 hosting with Origin Access Control (private buckets)
-- Custom domain: www.matteo.wtf with automatic DNS management
-- Automated SSL certificate provisioning and renewal
-- Email forwarding: SES receives emails at hello@matteo.wtf, Lambda forwards to matteo.salvestrini@icloud.com
+### Testing
 
-### Email Infrastructure Details
-- **S3 Bucket**: Temporary email storage with 7-day lifecycle policy
-- **Lambda Function**: Node.js 20.x runtime for email processing and forwarding
-- **SES Rules**: Receipt rule set with S3 and Lambda actions
-- **MX Record**: Automatically created pointing to `inbound-smtp.eu-south-1.amazonaws.com`
-- **Required Setup**: SES domain verification and email address verification for matteo.salvestrini@icloud.com
+Vitest 3 with `happy-dom` and `globals: true`. `src/test/setup.ts` stubs a global `Astro` object (props/slots/params/url) so utility code that touches it doesn't blow up — `.astro` components themselves are not rendered in tests. Only `src/**/*.{test,spec}.*` is collected.
 
-### Component Development
-- Follow existing component patterns in `src/components/`
-- Use TypeScript interfaces for props
-- Leverage Astro's component islands for client-side interactivity when needed
-- Maintain responsive design patterns with Tailwind utilities
+### AWS infrastructure — five stacks, two pipelines
 
-### Performance Considerations
-- Static site generation for optimal performance
-- CloudFront CDN for global delivery
-- Astro's partial hydration architecture
-- Image optimization ready (add when needed)
+`infrastructure/bin/infrastructure.ts` instantiates:
 
-## Common Development Workflows
+| Stack | Region | Purpose |
+|---|---|---|
+| `CertificateStack` | us-east-1 | ACM cert for www.matteo.wtf (must be us-east-1 for CloudFront) |
+| `PersonalWebsiteStack` (`WebsiteStack`) | eu-south-1 | Private S3 bucket + CloudFront with Origin Access Control + Route 53 A record |
+| `FrontendPipelineStack` | eu-south-1 | CodePipeline `matteo-frontend-pipeline` for website code |
+| `InfrastructurePipelineStack` | eu-south-1 | Self-mutating CDK Pipeline `matteo-infrastructure-pipeline` |
+| `EmailStack` | eu-south-1 | SES receipt rules → S3 → Lambda forwarder for hello@matteo.wtf |
 
-### Adding New Blog Posts
-1. Create markdown file in `src/content/blog/`
-2. Include required frontmatter (title, description, pubDate, etc.)
-3. Content automatically validated against Zod schema
+Cross-region references between CertificateStack and WebsiteStack require `crossRegionReferences: true` on both.
 
-### Infrastructure Changes
-1. Modify CDK stacks in `infrastructure/lib/`
-2. Test with `npm run diff` to preview changes
-3. Deploy with `npm run deploy`
-4. CI/CD pipeline automatically redeploys website
+**Important duplication:** `InfrastructurePipelineStack` defines an internal `InfrastructureStage` that re-instantiates `CertificateStack`, `WebsiteStack`, and `EmailStack` under stage-scoped names. So those three stacks exist twice in the CDK app — once top-level (deployed by `cdk deploy`) and once inside the pipeline stage (deployed by the pipeline). Changing a stack's props means changing them in **both** `bin/infrastructure.ts` and `lib/infrastructure-pipeline-stack.ts`, or the two deployment paths drift.
 
-### Testing New Features
-1. Write tests alongside implementation
-2. Use `npm run test:watch` during development
-3. Ensure `npm run test:run` passes before committing
+Both pipelines source from GitHub `hpfs74/personal-website` `main`, authenticating with a Secrets Manager secret named `gh-token`.
 
+- Frontend pipeline builds with `buildspec-frontend.yml`: `npm ci` → `npm run test:run` → `npm run build` → deploy `dist/` to S3 → CloudFront invalidation. **Tests gate deploys.**
+- Infrastructure pipeline synthesizes inline via a `ShellStep` (`cd infrastructure && npm ci && npm run build && npx cdk synth`), self-mutates, then deploys the stage.
 
-The project emphasizes type safety, comprehensive testing, and production-ready infrastructure with modern development practices.
+Stale files to be aware of: root `buildspec.yml` and `infrastructure/buildspec-infrastructure.yml` are not referenced by any stack (the infra pipeline uses the inline ShellStep instead). `infrastructure/PIPELINE_ARCHITECTURE.md` and `README.md` still describe the older single-pipeline setup — the CDK code is the source of truth.
+
+### Email forwarding
+
+SES receipt rule set `matteo.wtf-receive-email-rules` writes inbound mail to the `matteo.wtf-email-forwarding` bucket (7-day lifecycle) and invokes a `NodejsFunction` bundled from `infrastructure/assets/lambdas/email-forwarder.js`, which re-sends via SES. Destination is set by the `TO_EMAIL` env var in `email-stack.ts` (currently `matteo.salvestrini+cvwebsite@icloud.com`). The MX record is created by the stack; SES domain verification and verification of the destination address are manual prerequisites.
+
+## Conventions
+
+- New blog post: drop a markdown file in `src/content/blog/` with valid frontmatter — routing and types are automatic.
+- New CV section: create a component in `src/components/` following the existing pattern (data literal in frontmatter, `<section id="...">` with the numbered `NN / Label` accent eyebrow), then add it to `src/pages/index.astro`.
+- Infrastructure change: `npm run diff` before `npm run deploy:all`, and remember the stage duplication noted above.

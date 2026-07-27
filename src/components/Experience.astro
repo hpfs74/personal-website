@@ -3,74 +3,56 @@ const experiences = [
   {
     title: "Senior Software Engineer",
     company: "Tech Company",
-    period: "2022 - Present",
+    period: "2022 — Present",
     description: "Led development of scalable web applications using modern technologies. Mentored junior developers and collaborated with cross-functional teams.",
     technologies: ["React", "Node.js", "AWS", "TypeScript"]
   },
   {
     title: "Software Engineer",
     company: "StartupXYZ",
-    period: "2020 - 2022",
+    period: "2020 — 2022",
     description: "Built full-stack applications and contributed to product architecture decisions. Implemented CI/CD pipelines and automated testing.",
     technologies: ["Vue.js", "Python", "Docker", "PostgreSQL"]
   },
   {
     title: "Junior Developer",
     company: "Digital Agency",
-    period: "2018 - 2020",
+    period: "2018 — 2020",
     description: "Developed responsive web applications and learned industry best practices. Collaborated with designers to implement pixel-perfect UIs.",
     technologies: ["JavaScript", "HTML/CSS", "PHP", "MySQL"]
   }
 ];
 ---
 
-<section id="experience" class="py-16 bg-gray-50">
+<section id="experience" class="py-24 bg-bg border-t border-border">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="lg:text-center">
-      <h2 class="text-base text-indigo-600 font-semibold tracking-wide uppercase">Experience</h2>
-      <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-        Professional Journey
-      </p>
+    <div class="mb-16">
+      <span class="text-accent font-display font-bold text-xs tracking-widest uppercase">02 / Experience</span>
+      <h2 class="font-display font-bold text-4xl sm:text-5xl text-text mt-3">Professional Journey</h2>
     </div>
 
-    <div class="mt-16">
-      <div class="flow-root">
-        <ul class="-mb-8">
-          {experiences.map((exp, index) => (
-            <li key={index}>
-              <div class="relative pb-8">
-                {index !== experiences.length - 1 && (
-                  <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
-                )}
-                <div class="relative flex space-x-3">
-                  <div>
-                    <span class="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center ring-8 ring-white">
-                      <svg class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v6.5A1.5 1.5 0 0116.5 16h-13A1.5 1.5 0 012 14.5V8a2 2 0 012-2h2zm5-1a1 1 0 00-1-1H8a1 1 0 00-1 1v1h4V5zM4 8v6.5a.5.5 0 00.5.5h11a.5.5 0 00.5-.5V8H4z" clip-rule="evenodd" />
-                      </svg>
-                    </span>
-                  </div>
-                  <div class="min-w-0 flex-1 pt-1.5">
-                    <div>
-                      <p class="text-sm text-gray-500">{exp.period}</p>
-                      <h3 class="text-lg font-semibold text-gray-900">{exp.title}</h3>
-                      <p class="text-md font-medium text-indigo-600">{exp.company}</p>
-                      <p class="mt-2 text-sm text-gray-700">{exp.description}</p>
-                      <div class="mt-3 flex flex-wrap gap-2">
-                        {exp.technologies.map((tech) => (
-                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                            {tech}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+    <div class="max-w-3xl">
+      {experiences.map((exp, index) => (
+        <div class={`relative pl-8 ${index !== experiences.length - 1 ? 'pb-12' : ''}`}>
+          {index !== experiences.length - 1 && (
+            <div class="absolute left-0 top-3 bottom-0 w-px bg-border"></div>
+          )}
+          <div class="absolute left-0 top-2.5 w-2.5 h-2.5 -translate-x-1 rounded-full bg-accent ring-4 ring-bg"></div>
+          <div>
+            <span class="text-xs text-muted font-medium tracking-wide">{exp.period}</span>
+            <h3 class="font-display font-bold text-xl text-text mt-1">{exp.title}</h3>
+            <p class="text-accent text-sm font-medium mt-0.5 mb-3">{exp.company}</p>
+            <p class="text-muted text-sm leading-relaxed mb-4">{exp.description}</p>
+            <div class="flex flex-wrap gap-2">
+              {exp.technologies.map((tech) => (
+                <span class="text-xs px-2.5 py-1 rounded-full bg-surface border border-border text-muted">
+                  {tech}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   </div>
 </section>
