@@ -2,73 +2,41 @@
 const skillCategories = [
   {
     category: "Frontend",
-    skills: [
-      { name: "React", level: 90 },
-      { name: "Vue.js", level: 85 },
-      { name: "TypeScript", level: 88 },
-      { name: "Tailwind CSS", level: 92 },
-      { name: "Next.js", level: 87 }
-    ]
+    skills: ["React", "Vue.js", "TypeScript", "Tailwind CSS", "Next.js"]
   },
   {
     category: "Backend",
-    skills: [
-      { name: "Node.js", level: 90 },
-      { name: "Python", level: 85 },
-      { name: "Express.js", level: 88 },
-      { name: "GraphQL", level: 80 },
-      { name: "REST APIs", level: 95 }
-    ]
+    skills: ["Node.js", "Python", "Express.js", "GraphQL", "REST APIs"]
   },
   {
     category: "DevOps & Cloud",
-    skills: [
-      { name: "AWS", level: 85 },
-      { name: "Docker", level: 88 },
-      { name: "CI/CD", level: 90 },
-      { name: "Kubernetes", level: 75 },
-      { name: "Terraform", level: 80 }
-    ]
+    skills: ["AWS", "Docker", "CI/CD", "Kubernetes", "Terraform"]
   },
   {
     category: "Databases",
-    skills: [
-      { name: "PostgreSQL", level: 90 },
-      { name: "MongoDB", level: 85 },
-      { name: "Redis", level: 82 },
-      { name: "MySQL", level: 88 }
-    ]
+    skills: ["PostgreSQL", "MongoDB", "Redis", "MySQL"]
   }
 ];
 ---
 
-<section id="skills" class="py-16 bg-white">
+<section id="skills" class="py-24 bg-bg border-t border-border">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="lg:text-center">
-      <h2 class="text-base text-indigo-600 font-semibold tracking-wide uppercase">Skills</h2>
-      <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-        Technical Expertise
-      </p>
+    <div class="mb-16">
+      <span class="text-accent font-display font-bold text-xs tracking-widest uppercase">03 / Skills</span>
+      <h2 class="font-display font-bold text-4xl sm:text-5xl text-text mt-3">Technical Skills</h2>
     </div>
 
-    <div class="mt-16 grid grid-cols-1 gap-8 lg:grid-cols-2">
-      {skillCategories.map((category) => (
-        <div class="bg-gray-50 p-6 rounded-lg">
-          <h3 class="text-xl font-semibold text-gray-900 mb-6">{category.category}</h3>
-          <div class="space-y-4">
-            {category.skills.map((skill) => (
-              <div>
-                <div class="flex justify-between mb-1">
-                  <span class="text-sm font-medium text-gray-700">{skill.name}</span>
-                  <span class="text-sm text-gray-500">{skill.level}%</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    class="bg-indigo-600 h-2 rounded-full transition-all duration-1000 ease-out"
-                    style={`width: ${skill.level}%`}
-                  ></div>
-                </div>
-              </div>
+    <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+      {skillCategories.map((cat) => (
+        <div>
+          <h3 class="font-display font-semibold text-xs text-muted uppercase tracking-widest mb-5 pb-3 border-b border-border">
+            {cat.category}
+          </h3>
+          <div class="flex flex-wrap gap-2">
+            {cat.skills.map((skill) => (
+              <span class="text-sm px-3 py-1.5 rounded-full bg-surface border border-border text-text hover:border-accent hover:text-accent transition-colors cursor-default">
+                {skill}
+              </span>
             ))}
           </div>
         </div>
