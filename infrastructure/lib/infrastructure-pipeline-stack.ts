@@ -4,6 +4,7 @@ import { CodePipeline, CodePipelineSource, ShellStep } from 'aws-cdk-lib/pipelin
 import { WebsiteStack } from './website-stack';
 import { CertificateStack } from './certificate-stack';
 import { EmailStack } from './email-stack';
+import { FrontendPipelineStack } from './pipeline-stack';
 import {
   CODESTAR_CONNECTION_ARN,
   GITHUB_BRANCH,
@@ -105,8 +106,33 @@ class InfrastructureStage extends cdk.Stage {
       domain: 'matteo.wtf',
     });
 
+    // The frontend pipeline must be part of this stage even though it is not
+    // "infrastructure" in the narrow sense. It consumes websiteStack's
+    // distribution and bucket, and that consumption is what makes CDK emit the
+    // cross-stack Exports on PersonalWebsiteStack. A stage without it
+    // synthesises a PersonalWebsiteStack template with no Outputs at all, so
+    // deploying it tries to delete exports the real FrontendPipelineStack still
+    // imports, and CloudFormation rejects the update:
+    //   "Cannot delete export PersonalWebsiteStack:ExportsOutputRefSiteDistribution...
+    //    as it is in use by FrontendPipelineStack"
+    //
+    // The rule: because the stage stacks adopt the live stack names, the stage
+    // has to mirror the whole app. Anything added to bin/infrastructure.ts that
+    // produces or consumes a cross-stack reference belongs here too.
+    const frontendPipelineStack = new FrontendPipelineStack(this, 'FrontendPipelineStack', {
+      stackName: 'FrontendPipelineStack',
+      env: {
+        account: this.account!,
+        region: 'eu-south-1',
+      },
+      crossRegionReferences: true,
+      distribution: websiteStack.distribution,
+      siteBucket: websiteStack.siteBucket,
+    });
+
     void emailStack;
 
     websiteStack.addDependency(certificateStack);
+    frontendPipelineStack.addDependency(websiteStack);
   }
 }
