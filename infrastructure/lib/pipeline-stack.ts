@@ -5,8 +5,12 @@ import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
+import {
+	CODESTAR_CONNECTION_ARN,
+	GITHUB_BRANCH,
+	GITHUB_REPO_ID,
+} from './source-config';
 
 export interface PipelineStackProps extends cdk.StackProps {
 	distribution: cloudfront.Distribution;
@@ -20,28 +24,14 @@ export class FrontendPipelineStack extends cdk.Stack {
 
 		const {distribution, siteBucket} = props;
 
-		// GitHub token secret - you need to manually set this in AWS Secrets Manager
-		// with your actual GitHub personal access token
-		const githubTokenSecret = secretsmanager.Secret.fromSecretNameV2(this, 'GitHubToken', 'gh-token');
-
-
-    // GitHub source credentials for CodeBuild
-    new codebuild.GitHubSourceCredentials(this, 'GitHubSourceCredentials', {
-      accessToken: githubTokenSecret.secretValue,
-    });
-
-    // CodeBuild project for frontend only
-    const codeBuildProject = new codebuild.Project(this, 'FrontendBuildProject', {
-      source: codebuild.Source.gitHub({
-        owner: 'hpfs74',
-        repo: 'personal-website',
-        // webhook: true,
-        // webhookFilters: [
-        //   codebuild.FilterGroup.inEventOf(codebuild.EventAction.PUSH)
-        //     .andBranchIs('main')
-        //     .andFilePathIsNot('^infrastructure/.*'),
-        // ],
-      }),
+    // CodeBuild project for frontend only.
+    //
+    // This is a PipelineProject: the source is always the input artifact handed
+    // over by CodePipeline, so the project needs no GitHub credentials of its
+    // own. It previously declared a `Source.gitHub()` plus account-level
+    // `GitHubSourceCredentials` backed by the `gh-token` secret, which tied the
+    // build to a PAT it never actually used at run time.
+    const codeBuildProject = new codebuild.PipelineProject(this, 'FrontendBuildProject', {
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
         computeType: codebuild.ComputeType.SMALL,
@@ -67,7 +57,7 @@ export class FrontendPipelineStack extends cdk.Stack {
 
 
     // Create invalidation project for CloudFront cache invalidation
-    const invalidationProject = new codebuild.Project(this, 'InvalidateProject', {
+    const invalidationProject = new codebuild.PipelineProject(this, 'InvalidateProject', {
       buildSpec: codebuild.BuildSpec.fromObject({
         version: '0.2',
         phases: {
@@ -102,12 +92,12 @@ export class FrontendPipelineStack extends cdk.Stack {
         {
           stageName: 'Source',
           actions: [
-            new codepipeline_actions.GitHubSourceAction({
+            new codepipeline_actions.CodeStarConnectionsSourceAction({
               actionName: 'GitHub_Source',
-              owner: 'hpfs74',
-              repo: 'personal-website',
-              branch: 'main',
-              oauthToken: cdk.SecretValue.secretsManager('gh-token'), // Store GitHub token in Secrets Manager
+              connectionArn: CODESTAR_CONNECTION_ARN,
+              owner: GITHUB_REPO_ID.split('/')[0],
+              repo: GITHUB_REPO_ID.split('/')[1],
+              branch: GITHUB_BRANCH,
               output: sourceOutput,
             }),
           ],
