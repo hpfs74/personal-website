@@ -9,7 +9,8 @@ import { Construct } from 'constructs';
 import {
 	CODESTAR_CONNECTION_ARN,
 	GITHUB_BRANCH,
-	GITHUB_REPO_ID,
+	GITHUB_OWNER,
+	GITHUB_REPO,
 } from './source-config';
 
 export interface PipelineStackProps extends cdk.StackProps {
@@ -86,21 +87,37 @@ export class FrontendPipelineStack extends cdk.Stack {
     const sourceOutput = new codepipeline.Artifact();
     const buildOutput = new codepipeline.Artifact();
 
+    const sourceAction = new codepipeline_actions.CodeStarConnectionsSourceAction({
+      actionName: 'GitHub_Source',
+      connectionArn: CODESTAR_CONNECTION_ARN,
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      branch: GITHUB_BRANCH,
+      output: sourceOutput,
+    });
+
     new codepipeline.Pipeline(this, 'FrontendPipeline', {
       pipelineName: 'matteo-frontend-pipeline',
+      // This pipeline is V2, where push detection is driven by `triggers`.
+      // `DetectChanges` on the source action is a V1 mechanism and is silently
+      // ignored here — without the block below the pipeline simply never fires
+      // on a push, which is exactly what happened after the source action was
+      // switched from the V1 GitHub action (whose explicit Webhook resource had
+      // been doing the job) to CodeConnections.
+      pipelineType: codepipeline.PipelineType.V2,
+      triggers: [
+        {
+          providerType: codepipeline.ProviderType.CODE_STAR_SOURCE_CONNECTION,
+          gitConfiguration: {
+            sourceAction,
+            pushFilter: [{ branchesIncludes: [GITHUB_BRANCH] }],
+          },
+        },
+      ],
       stages: [
         {
           stageName: 'Source',
-          actions: [
-            new codepipeline_actions.CodeStarConnectionsSourceAction({
-              actionName: 'GitHub_Source',
-              connectionArn: CODESTAR_CONNECTION_ARN,
-              owner: GITHUB_REPO_ID.split('/')[0],
-              repo: GITHUB_REPO_ID.split('/')[1],
-              branch: GITHUB_BRANCH,
-              output: sourceOutput,
-            }),
-          ],
+          actions: [sourceAction],
         },
         {
           stageName: 'Build',
